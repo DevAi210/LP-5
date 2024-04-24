@@ -1,0 +1,72 @@
+//4(A) ADDITION
+
+
+!nvcc --version
+
+
+
+!pip install git+https://github.com/andreinechaev/nvcc4jupyter.git
+
+
+
+%load_ext nvcc4jupyter
+
+
+%%cuda
+#include <stdio.h>
+
+
+#define N 1000000
+
+// CUDA kernel for vector addition
+__global__ void vectorAdd(int *a, int *b, int *c, int n) {
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+    if (i < n) {
+        c[i] = a[i] + b[i];
+    }
+}
+
+int main() {
+    // Host vectors
+    int *h_a, *h_b, *h_c;
+    // Device vectors
+    int *d_a, *d_b, *d_c;
+    // Vector size
+    int size = N * sizeof(int);
+    // Allocate memory for host vectors
+    h_a = (int *)malloc(size);
+    h_b = (int *)malloc(size);
+    h_c = (int *)malloc(size);
+    // Initialize host vectors
+    for (int i = 0; i < N; ++i) {
+        h_a[i] = i;
+        h_b[i] = i * 2;
+    }
+    // Allocate memory for device vectors
+    cudaMalloc((void **)&d_a, size);
+    cudaMalloc((void **)&d_b, size);
+    cudaMalloc((void **)&d_c, size);
+    // Copy host vectors to device
+    cudaMemcpy(d_a, h_a, size, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_b, h_b, size, cudaMemcpyHostToDevice);
+    // Define grid and block size
+    dim3 dimGrid(ceil(N / 256.0), 1, 1);
+    dim3 dimBlock(256, 1, 1);
+    // Launch vectorAdd kernel on GPU
+    vectorAdd<<<dimGrid, dimBlock>>>(d_a, d_b, d_c, N);
+    // Copy result from device to host
+    cudaMemcpy(h_c, d_c, size, cudaMemcpyDeviceToHost);
+    // Verify the result
+    for (int i = 0; i < 10; ++i) {
+        printf("%d + %d = %d\n", h_a[i], h_b[i], h_a[i] + h_b[i]);
+    }
+    // Free device memory
+    cudaFree(d_a);
+    cudaFree(d_b);
+    cudaFree(d_c);
+    // Free host memory
+    free(h_a);
+    free(h_b);
+    free(h_c);
+    return 0;
+}

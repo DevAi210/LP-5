@@ -1,0 +1,65 @@
+// HPC 1(B) DFS
+
+#include <iostream>
+#include <vector>
+#include <stack>
+
+using namespace std;
+
+// Node structure
+struct Node {
+    int value;
+    vector<Node*> children;
+};
+
+// DFS function
+void dfs(Node* node) {
+    if (node == nullptr) return;
+    cout << node->value << " "; // Print node's value
+    for (size_t i = 0; i < node->children.size(); ++i) { // Traverse children
+        dfs(node->children[i]);
+    }
+}
+
+// Function to clean up the tree (recursively delete all nodes)
+void delete_tree(Node* node) {
+    if (node == nullptr) return;
+    for (auto child : node->children) {
+        delete_tree(child); // Recurse to delete children
+    }
+    delete node; // Delete current node
+}
+
+int main() {
+    // Create root node
+    Node* root = new Node{1};
+
+    stack<Node*> nodes; // Stack to manage current nodes
+    nodes.push(root); // Initialize with root node
+
+    char choice;
+    // Loop to add new nodes
+    do {
+        cout << "Enter data for the next node: ";
+        int data;
+        cin >> data; // Get data for the new node
+        Node* newNode = new Node{data}; // Create new node
+
+        Node* current = nodes.top(); // Current node is at top of stack
+        current->children.push_back(newNode); // Add new node as a child
+        nodes.push(newNode); // Push new node onto stack
+
+        cout << "Do you want to insert one more node? (y/n): ";
+        cin >> choice; // Ask if user wants to add another node
+    } while (choice == 'y' || choice == 'Y');
+
+    // DFS Traversal
+    cout << "DFS traversal result: ";
+    dfs(root); // Perform DFS
+    cout << endl;
+
+    // Clean up memory
+    delete_tree(root); // Delete all nodes to free memory
+
+    return 0;
+}
